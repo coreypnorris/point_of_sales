@@ -40,6 +40,7 @@ def admin_menu
   until choice == 'X'
     puts "Press 'C' to add a cashier"
     puts "Press 'P' to add a product"
+    puts "Press 'V' to search for sales by date"
     puts "Press 'LC' to list all cashiers"
     puts "Press 'LP' to list all products"
     puts "Press 'X' to exit system"
@@ -50,6 +51,8 @@ def admin_menu
       add_cashier
     when "P"
       add_product
+    when "V"
+      sales_by_date
     when "LC"
       list_cashiers
     when "LP"
@@ -83,7 +86,7 @@ def list_cashiers
   system "clear"
   puts "List of all cashiers:"
   Cashier.all.reorder('name').each do |cashier|
-    puts "#{cashier.name} ID: #{cashier.id}"
+    puts "#{cashier.name} ID: #{cashier.id}\n\n"
   end
 end
 
@@ -91,7 +94,7 @@ def list_products
   system "clear"
   puts "List of all products:"
   Product.all.reorder('name').each do |product|
-    puts "#{product.name} Cost: $#{product.cost} ID: #{product.id}"
+    puts "#{product.name} Cost: $#{product.cost} ID: #{product.id}\n\n"
   end
 end
 
@@ -141,17 +144,32 @@ end
 
 def receipt(sale)
   current_sale = sale
-  puts "Receipt for #{current_sale.customer.name}"
+  puts "\n\nReceipt for #{current_sale.customer.name}"
   total = 0
   current_sale.goods.each do |good|
-    current_product = Product.find_by(:id =>good.product_id)
+    current_product = Product.find(good.product_id)
     current_total = (current_product.cost * good.quantity).round(2)
     total += current_total
     puts "#{current_product.name} individual cost: $#{current_product.cost} quantity: #{good.quantity} Total: $#{current_total}"
   end
-  puts "Your total for today is #{total.round(2)}"
+  puts "========================="
+  puts "Total for #{current_sale.customer.name} is #{total.round(2)}\n\n"
+  total
 end
 
+def sales_by_date
+  puts "Enter a starting date for your sales range:"
+  starting_time = gets.chomp + ' 00:00:00.0001'
+  puts "Enter an ending time for your sales range:"
+  ending_time = gets.chomp + ' 23:59:59.9999'
+  date_range = (starting_time..ending_time)
+  sales_to_show = Sale.where(:created_at => date_range)
+  daily_total = 0
+  sales_to_show.each do |sale|
+    daily_total += receipt(sale)
+  end
+  puts "Total for the inputted range: #{daily_total}\n\n"
+end
 
 welcome
 
