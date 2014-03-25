@@ -4,6 +4,7 @@ require './lib/cashier'
 require './lib/product'
 require './lib/customer'
 require './lib/sale'
+require './lib/good'
 
 
 database_configurations = YAML::load(File.open("./db/config.yml"))
@@ -11,7 +12,7 @@ development_configuration = database_configurations["development"]
 ActiveRecord::Base.establish_connection(development_configuration)
 
 def welcome
-  puts "Welcome to the To Do list!"
+  puts "Welcome to the Point of sale System"
   login_menu
 end
 
@@ -124,7 +125,9 @@ def add_product_to_sale(sale)
   list_products
   puts "choose a product by id to add:"
   current_product = Product.find_by(:id => gets.chomp.to_i)
-  current_sale.products << current_product
+  puts "how many #{current_product.name} to add?"
+  quantity = gets.chomp.to_i
+  Good.create(:sale_id => current_sale.id, :product_id => current_product.id, :quantity => quantity)
   puts "Would you like to add another product? Y/N"
   choice = gets.chomp.upcase
 
@@ -132,12 +135,24 @@ def add_product_to_sale(sale)
   when "Y"
     add_product_to_sale(current_sale)
   when "N"
-    puts "entire transaction for #{current_sale.customer.name}"
-    current_sale.products.each do |product|
-      puts "#{product.name} cost: $#{product.cost}"
-    end
+    receipt(current_sale)
   end
 end
+
+def receipt(sale)
+  current_sale = sale
+  puts "Receipt for #{current_sale.customer.name}"
+  total = 0
+  current_sale.goods.each do |good|
+    current_product = Product.find_by(:id =>good.product_id)
+    current_total = (current_product.cost * good.quantity).round(2)
+    total += current_total
+    puts "#{current_product.name} individual cost: $#{current_product.cost} quantity: #{good.quantity} Total: $#{current_total}"
+  end
+  puts "Your total for today is #{total.round(2)}"
+end
+
+
 welcome
 
 

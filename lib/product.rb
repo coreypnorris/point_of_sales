@@ -1,3 +1,4 @@
 class Product < ActiveRecord::Base
- has_and_belongs_to_many :sales
+  has_many :goods
+  has_many :sales, through: :goods
 end
